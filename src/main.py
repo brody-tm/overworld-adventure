@@ -16,6 +16,7 @@ enemies = {
 }
 
 game_items = {
+    'Fists': {'DMG': 10},
     'Heavenly Sword': {'DMG': 40},
     'Shark Tooth Hatchet': {'DMG': 25},
     'Wooden Slingshot': {'DMG': 15}
@@ -24,7 +25,7 @@ game_items = {
 current_location = 'Dark Forest'
 msg = 'Welcome to Dark Forest!'
 
-inventory = []
+inventory = ['Fists']
 enemies_killed = []
 player_HP = 100
 
@@ -52,14 +53,49 @@ def handleEnemy(location):
                 print(f'Would you like to fight {enemy_name}? (Y/N)')
                 choice = input('> ').upper()
                 if choice == 'Y':
-                    print(f'You choose to fight {enemy_name}.')
                     # Add logic for fighting the enemy here
+                    handleBattle(enemy_name, enemy_HP)
                     break
                 elif choice == 'N':
                     print('You choose to flee.')
                     break
                 else:
                     print('Invalid choice. Please enter Y or N.')
+
+def handleBattle(enemy_name, enemy_HP):
+    clear()
+    enemy_HP = enemy_HP
+    battle_HP = player_HP
+    player_DMG = 0
+    print(f'You choose to fight {enemy_name}.')
+    
+    # Weapon choice
+    print('Which weapon will you use?')
+    item_dict = {}
+    i = 0
+    for item in inventory:
+        item_dict[str(i)] = item
+        item_DMG = game_items[item]['DMG']
+        print(f'{i}.  {item} (DMG: {item_DMG})')
+        i += 1
+    while True:
+        choice = input('> ')
+        if choice in item_dict:
+            selected_item = item_dict[choice]
+            print(f'You fight with your {selected_item}.')
+            player_DMG = game_items[selected_item]['DMG']
+            break
+        else:
+            print('Invalid weapon choice.')
+
+    # Fight loop
+    while enemy_HP > 0:
+        print(f'Your HP: {battle_HP}')
+        print(f'Enemy HP: {enemy_HP}')
+        choice = input('> ').upper()
+        enemy_HP -= player_DMG
+    print('You won!')
+    enemies_killed.append(enemy_name)
 
 # Start Game
 while True:
@@ -75,9 +111,9 @@ while True:
 
     handleEnemy(locations[current_location])
 
-    # Check if all items have been found
-    if len(inventory) == len(game_items):
-        print('You have found all the items!')
+    # Check if all enemies have been killed
+    if len(enemies_killed) == len(enemies):
+        print('You have killed all the enemies!')
         print('Your items:', ', '.join(inventory))
         break
 
