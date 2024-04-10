@@ -12,13 +12,13 @@ locations = {
 }
 
 enemies = {
-    'Giant': {'HP': 80},
-    'Satan': {'HP': 120}
+    'Giant': {'HP': 80, "DMG": 5},
+    'Satan': {'HP': 120, "DMG": 30}
 }
 
 game_items = {
-    'Fists': {'DMG': 10},
-    'Heavenly Sword': {'DMG': 40},
+    'Fists': {'DMG': 3},
+    'Heavenly Sword': {'DMG': 30},
     'Shark Tooth Hatchet': {'DMG': 25},
     'Wooden Slingshot': {'DMG': 15}
 }
@@ -37,6 +37,7 @@ msg = 'You are in Dark Forest.'
 inventory = ['Fists']
 enemies_killed = []
 player_HP = 100
+player_dead = 0
 
 # Clear screen
 def clear():
@@ -66,14 +67,15 @@ def handleEnemy(location):
     if 'Enemy' in location:
         enemy_name = location['Enemy']
         enemy_HP = enemies[enemy_name]['HP']
+        enemy_DMG = enemies[enemy_name]['DMG']
         if enemy_name not in enemies_killed:
-            print(f'{enemy_name} lurks... HP: {enemy_HP}')
+            print(f'{enemy_name} lurks... HP: {enemy_HP} DMG: {enemy_DMG}')
             while True:
                 print(f'Would you like to fight {enemy_name}? (Y/N)')
                 choice = input('> ').upper()
                 if choice == 'Y':
                     # Add logic for fighting the enemy here
-                    handleBattle(enemy_name, enemy_HP)
+                    handleBattle(enemy_name, enemy_HP, enemy_DMG)
                     break
                 elif choice == 'N':
                     print('You choose to flee.')
@@ -81,12 +83,15 @@ def handleEnemy(location):
                 else:
                     print('Invalid choice. Please enter Y or N.')
 
-def handleBattle(enemy_name, enemy_HP):
-    clear()
+def handleBattle(enemy_name, enemy_HP, enemy_DMG):
+    global player_HP
+    global player_dead
     enemy_HP = enemy_HP
+    enemy_DMG = enemy_DMG
     battle_HP = player_HP
     player_DMG = 0
     selected_item = ''
+    clear()
     print(f'You choose to fight {enemy_name}.')
     
     # Weapon choice
@@ -113,18 +118,27 @@ def handleBattle(enemy_name, enemy_HP):
 
     # Fight loop
     while enemy_HP > 0:
+        if battle_HP <= 0:
+            clear()
+            print('You died!')
+            player_HP = battle_HP
+            player_dead = 1
+            return
         if battle_iterations > 0:
             clear()
             print(f'Your {selected_item} did {player_DMG} DMG!')
+            print(f'{enemy_name} dealt {enemy_DMG} DMG!')
         print(f'Your HP: {battle_HP}')
         print(f'Enemy HP: {enemy_HP}')
         print('Press enter to attack!')
         choice = input('> ').upper()
         enemy_HP -= player_DMG
+        battle_HP -= enemy_DMG
         battle_iterations += 1
     clear()
     print('You won!')
     enemies_killed.append(enemy_name)
+    player_HP = battle_HP
 
 # Start Game
 welcome()
@@ -135,7 +149,7 @@ while True:
     print('Inventory:')
     for item in inventory:
         item_DMG = game_items[item]['DMG']
-        print(f'  {item} (DMG: {item_DMG})')
+        print(f'  - {item} (DMG: {item_DMG})')
     print('HP:', player_HP)
 
     handleItem(locations[current_location])
@@ -146,6 +160,10 @@ while True:
     if len(enemies_killed) == len(enemies):
         print('You have killed all the enemies!')
         print('Your items:', ', '.join(inventory))
+        break
+
+    # Check if player is dead
+    if player_dead != 0:
         break
 
     # Player move
