@@ -1,4 +1,5 @@
 import os
+import shutil
 
 locations = {
     'Dark Forest': {'North': 'Giant Cliffs', 'South': 'The Caverns', 'East': 'The Ocean', 'West': 'Green Plains'},
@@ -22,8 +23,16 @@ game_items = {
     'Wooden Slingshot': {'DMG': 15}
 }
 
+welcome_strings = [
+    'Welcome to Overworld Adventure!',
+    'Upon starting the game, you will be asked which way you would like to go.',
+    'You can explore the world by typing \'north\', \'south\', \'east\', or \'west\'.',
+    'Your goal is to defeat all the monsters in the world.',
+    'Good luck!'
+]
+
 current_location = 'Dark Forest'
-msg = 'Welcome to Dark Forest!'
+msg = 'You are in Dark Forest.'
 
 inventory = ['Fists']
 enemies_killed = []
@@ -32,6 +41,16 @@ player_HP = 100
 # Clear screen
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
+
+def print_center(s):
+    print(s.center(shutil.get_terminal_size().columns))
+
+def welcome():
+    clear()
+    for s in welcome_strings:
+        print_center(s)
+    print('Press ENTER to continue.')
+    input('> ')
 
 # Check if there is an item in the current location and handle appropriately
 def handleItem(location):
@@ -67,37 +86,49 @@ def handleBattle(enemy_name, enemy_HP):
     enemy_HP = enemy_HP
     battle_HP = player_HP
     player_DMG = 0
+    selected_item = ''
     print(f'You choose to fight {enemy_name}.')
     
     # Weapon choice
     print('Which weapon will you use?')
-    item_dict = {}
+    item_choice_dict = {}
     i = 0
     for item in inventory:
-        item_dict[str(i)] = item
+        item_choice_dict[str(i)] = item
         item_DMG = game_items[item]['DMG']
         print(f'{i}.  {item} (DMG: {item_DMG})')
         i += 1
     while True:
         choice = input('> ')
-        if choice in item_dict:
-            selected_item = item_dict[choice]
-            print(f'You fight with your {selected_item}.')
+        if choice in item_choice_dict:
+            selected_item = item_choice_dict[choice]
+            clear()
+            print(f'You ready your {selected_item}.')
             player_DMG = game_items[selected_item]['DMG']
             break
         else:
             print('Invalid weapon choice.')
 
+    battle_iterations = 0
+
     # Fight loop
     while enemy_HP > 0:
+        if battle_iterations > 0:
+            clear()
+            print(f'Your {selected_item} did {player_DMG} DMG!')
         print(f'Your HP: {battle_HP}')
         print(f'Enemy HP: {enemy_HP}')
+        print('Press enter to attack!')
         choice = input('> ').upper()
         enemy_HP -= player_DMG
+        battle_iterations += 1
+    clear()
     print('You won!')
     enemies_killed.append(enemy_name)
 
 # Start Game
+welcome()
+
 while True:
     clear()
     print(msg)
