@@ -1,26 +1,29 @@
-import os
-import shutil
+import os, sys, time, shutil
 
 locations = {
     'Dark Forest': {'North': 'Giant Cliffs', 'South': 'The Caverns', 'East': 'The Ocean', 'West': 'Green Plains'},
-    'Green Plains': {'East': 'Dark Forest'},
+    'Green Plains': {'East': 'Dark Forest', 'Potion': 'HP'},
     'Giant Cliffs': {'North': 'Heaven', 'South': 'Dark Forest', 'Enemy': 'Giant'},
-    'Heaven': {'South': 'Giant Cliffs', 'Item': 'Heavenly Sword'},
-    'The Ocean': {'West': 'Dark Forest', 'Item': 'Shark Tooth Hatchet'},
-    'The Caverns': {'North': 'Dark Forest', 'South': 'Hell', 'Item': 'Wooden Slingshot'},
+    'Heaven': {'South': 'Giant Cliffs', 'Weapon': 'Heavenly Sword'},
+    'The Ocean': {'West': 'Dark Forest', 'Weapon': 'Shark Tooth Hatchet'},
+    'The Caverns': {'North': 'Dark Forest', 'South': 'Hell', 'Weapon': 'Wooden Slingshot'},
     'Hell': {'North': 'The Caverns', 'Enemy': 'Satan'}
 }
 
 enemies = {
     'Giant': {'HP': 80, "DMG": 5},
-    'Satan': {'HP': 120, "DMG": 30}
+    'Satan': {'HP': 120, "DMG": 15}
 }
 
 game_items = {
     'Fists': {'DMG': 3},
-    'Heavenly Sword': {'DMG': 30},
-    'Shark Tooth Hatchet': {'DMG': 25},
-    'Wooden Slingshot': {'DMG': 15}
+    'Heavenly Sword': {'DMG': 35},
+    'Shark Tooth Hatchet': {'DMG': 30},
+    'Wooden Slingshot': {'DMG': 20}
+}
+
+potions = {
+    'HP': 15
 }
 
 welcome_strings = [
@@ -36,8 +39,14 @@ msg = 'You are in Dark Forest.'
 
 inventory = ['Fists']
 enemies_killed = []
+found_potions = []
 player_HP = 100
 player_dead = 0
+
+yellow = '\033[93m'
+red = '\033[91m'
+green = '\033[92m'
+white = '\033[00m'
 
 # Clear screen
 def clear():
@@ -46,6 +55,14 @@ def clear():
 def print_center(s):
     print(s.center(shutil.get_terminal_size().columns))
 
+# Character by character print
+def slow_print(msg):
+    for char in msg:
+        sys.stdout.write(char)
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+# Display welcome screen
 def welcome():
     clear()
     for s in welcome_strings:
@@ -55,12 +72,28 @@ def welcome():
 
 # Check if there is an item in the current location and handle appropriately
 def handleItem(location):
-    if 'Item' in location:
-        item_name = location['Item']
+    if 'Weapon' in location:
+        item_name = location['Weapon']
         item_DMG = game_items[item_name]['DMG']
         if item_name not in inventory:
-            print(f'You found {item_name}! It does {item_DMG} DMG!')
+            print(f'You found {yellow}{item_name}{white}! It does {item_DMG} DMG!')
             inventory.append(item_name)
+    if 'Potion' in location:
+        global player_HP
+        potion_name = location['Potion']
+        potion_HP = potions[potion_name]
+        if potion_name not in found_potions:
+            if player_HP < 100:
+                if player_HP <= 85:
+                    print(f'You found {red}{potion_name} Potion{white}! Restored {potion_HP} HP.')
+                    player_HP += 15
+                else:
+                    print(f'You found {red}{potion_name} Potion{white}! Restored {100 - player_HP} HP.')
+                    player_HP += (100 - player_HP)
+                found_potions.append(potion_name)
+            else:
+                print(f'You found {red}{potion_name} Potion{white}, but your health is full. You decide to leave it.')
+            
 
 # Check if there is an enemy in the current location and handle appropriately
 def handleEnemy(location):
@@ -120,7 +153,7 @@ def handleBattle(enemy_name, enemy_HP, enemy_DMG):
     while enemy_HP > 0:
         if battle_HP <= 0:
             clear()
-            print('You died!')
+            print(f'{red}You died!{white}')
             player_HP = battle_HP
             player_dead = 1
             return
@@ -136,7 +169,7 @@ def handleBattle(enemy_name, enemy_HP, enemy_DMG):
         battle_HP -= enemy_DMG
         battle_iterations += 1
     clear()
-    print('You won!')
+    print(f'{green}You won!{white}')
     enemies_killed.append(enemy_name)
     player_HP = battle_HP
 
@@ -150,7 +183,7 @@ while True:
     for item in inventory:
         item_DMG = game_items[item]['DMG']
         print(f'  - {item} (DMG: {item_DMG})')
-    print('HP:', player_HP)
+    print(f'HP:', player_HP)
 
     handleItem(locations[current_location])
 
